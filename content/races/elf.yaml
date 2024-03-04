@@ -1,0 +1,54 @@
+name: "Elf"
+male_names: >
+  Adran, Aelar, Aramil, Arannis, Aust, Beiro, Berrian, Carric, Enialis, Erdan, 
+  Erevan, Galinndan, Hadarai, Heian, Himo, Immeral, Ivellios, Laucian, Mindartis, 
+  Paelias, Peren, Quarion, Riardon, Rolen, Soveliss, Thamior, Tharivol, Theren, Varis
+female_names: >
+  Adrie, Althaea, Anastrianna, Andraste, Antinua, Bethrynna, Birel, Caelynn, Drusilia, 
+  Enna, Felosial, Ielenia, Jelenneth, Keyleth, Leshanna, Lia, Meriele, Mialee, Naivara, 
+  Quelenna, Quillathe, Sariel, Shanairra, Shava, Silaqui, Theirastra, Thia, Vadania, 
+  Valanthe, Xanaphia
+family_names: >
+  Amakiir, Amastacia, Galanodel, Holimion, Ilphelkiir, Liadon, Meliamne, Naïlo, Siannodel, Xiloscient
+size: medium
+speed: 30
+languages:
+  - common
+  - elvish
+traits:
+  - name: Ability Score Increase
+    type: ability_score_modifier
+    modifiers:
+      - dexterity: 2
+subraces:
+  - name: "High Elf"
+    traits: 
+      - name: Ability Score Increase
+        type: ability_score_modifier
+        data:
+          modifiers:
+            intelligence: 1
+      - name: Elf Weapon Training
+        type: weapon_proficiency
+        data:
+          weapons:
+            - Longsword
+            - Shortsword
+            - Shortbow
+            - Longbow
+  - name: "Wood Elf"
+    speed: 35
+    traits:
+      - name: Ability Score Increase
+        type: ability_score_modifier
+        data:
+          modifiers:
+            wisdom: 1
+      - name: Elf Weapon Training
+        type: weapon_proficiency
+        data:
+          weapons:
+            - Longsword
+            - Shortsword
+            - Shortbow
+            - Longbow

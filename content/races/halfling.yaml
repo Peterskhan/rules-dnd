@@ -1,0 +1,40 @@
+name: Halfling
+male_names: >
+  Alton, Ander, Cade, Corrin, Eldon, Errich,
+  Finnan, Garret, Lindal, Lyle, Merric, Milo, Osborn,
+  Perrin, Reed, Roscoe, Wellby
+female_names: >
+  Andry, Bree, Callie, Cora, Euphemia,
+  Jillian, Kithri, Lavinia, Lidda, Merla, Nedda, Paela,
+  Portia, Seraphina, Shaena, Trym, Vani, Verna
+family_names: >
+  Brushgather, Goodbarrel, Greenbottle,
+  High-hill, Hilltopple, Leagallow, Tealeaf, Thorngage,
+  Tosscobble, Underbough
+size: small
+speed: 25
+languages:
+  - common
+  - halfling
+traits:
+  - name: Ability Score Increase
+    type: ability_score_modifier
+    data:
+      modifiers:
+        dexterity: 2
+subraces:
+  - name: Lightfoot
+    traits: 
+      - name: Ability Score Increase
+        type: ability_score_modifier
+        data:
+          modifiers:
+            charisma: 1
+  - name: Stout
+    traits: 
+      - name: Ability Score Increase
+        type: ability_score_modifier
+        data:
+          modifiers:
+            constitution: 1
+      

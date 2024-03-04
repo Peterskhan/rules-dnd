@@ -1,0 +1,98 @@
+armors:
+
+  ## Light armors
+  - id: padded
+    name: Padded
+    type: light
+    cost: 5 gp
+    armor_class: 11
+    weight: 8
+    stealth_disadvantage: true
+  - id: leather
+    name: Leather
+    type: light
+    cost: 10 gp
+    armor_class: 11
+    weight: 10
+  - id: studded_lether
+    name: Studded leather
+    type: light
+    cost: 45 gp
+    armor_class: 12
+    weight: 13
+
+  ## Medium armors
+  - id: hide
+    name: Hide
+    type: medium
+    cost: 10 gp
+    armor_class: 12
+    weight: 12
+  - id: chain_shirt
+    name: Chain shirt
+    type: medium
+    cost: 50 gp
+    armor_class: 13
+    weight: 20
+  - id: scale_mail
+    name: Scale mail
+    type: medium
+    cost: 50 gp
+    armor_class: 14
+    stealth_disadvantage: true
+    weight: 45
+  - id: breastplate
+    name: Breastplate
+    type: medium
+    cost: 400 gp
+    armor_class: 14
+    weight: 20
+  - id: half_plate
+    name: Half plate
+    type: medium
+    cost: 750 gp
+    armor_class: 15
+    stealth_disadvantage: true
+    weight: 40
+
+  ## Heavy armors
+  - id: ring_mail
+    name: Ring mail
+    type: heavy
+    cost: 30 gp
+    armor_class: 14
+    stealth_disadvantage: true 
+    weight: 40
+  - id: chain_mail
+    name: Chain mail
+    type: heavy
+    cost: 75 gp
+    armor_class: 16
+    minimum_strength: 13
+    stealth_disadvantage: true 
+    weight: 55
+  - id: splint
+    name: Splint
+    type: heavy
+    cost: 200 gp
+    armor_class: 17
+    minimum_strength: 15
+    stealth_disadvantage: true 
+    weight: 60
+  - id: plate
+    name: Plate
+    type: heavy
+    cost: 1500 gp
+    armor_class: 18
+    minimum_strength: 15
+    stealth_disadvantage: true 
+    weight: 65
+
+  ## Shields
+  - id: shield
+    name: Shield
+    type: shield
+    cost: 10 gp
+    armor_class: 2
+    weight: 6
+    

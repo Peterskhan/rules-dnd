@@ -1,0 +1,55 @@
+name: Human
+size: medium
+speed: 30
+languages:
+  - common
+  - any
+traits:
+  - name: Ability Score Increase
+    type: ability_score_modifier
+    data:
+      modifiers:
+        strength: 1
+        dexterity: 1
+        constitution: 1
+        intelligence: 1
+        wisdom: 1
+        charisma: 1
+subraces:
+  - name: Calishite
+    male_names: Aseir, Bardeid, Haseid, Khemed, Mehmen, Sudeiman, Zasheir
+    female_names: Atala, Ceidil, Hama, Jasmal, Meilil, Seipora, Yasheira, Zasheida
+    family_names: Basha, Dumein, Jassan, Khalid, Mostana, Pashar, Rein
+  - name: Condathan
+    male_names: Darvin, Dorn, Evendur, Gorstag, Grim, Helm, Malark, Morn, Randal, Stedd
+    female_names: Arveene, Esvele, Jhessail, Kerri, Lureene, Miri, Rowan, Shandri, Tessele
+    family_names: Amblecrown, Buckman, Dundragon, Evenwood, Greycastle, Tallstag
+  - name: Damaran
+    male_names: Bor, Fodel, Glar, Grigor, Igan, Ivor, Kosef, Mival, Orel, Pavel, Sergor
+    female_names: Alethra, Kara, Katernin, Mara, Natali, Olma, Tana, Zora
+    family_names: Bersk, Chernin, Dotsk, Kulenov, Marsk, Nemetsk, Shemov, Starag
+  - name: Illuskan
+    male_names: Ander, Blath, Bran, Frath, Geth, Lander, Luth, Malcer, Stor, Taman, Urth
+    female_names: Amafrey, Betha, Cefrey, Kethra, Mara, Olga, Silifrey, Westra
+    family_names: Brightwood, Helder, Hornraven, Lackman, Stormwind, Windrivver
+  - name: Mulan
+    male_names: Aoth, Bareris, Ehput-Ki, Kethoth, Mumed, Ramas, So-Kehur, Thazar-De, Urhur
+    female_names: Arizima, Chathi, Nephis, Nulara, Murithi, Sefris, Thola, Umara, Zolis
+    family_names: Ankhalab, Anskuld, Fezim, Hahpet, Nathandem, Sepret, Uuthrakt
+  - name: Rashemi
+    male_names: Borivik, Faurgar, Jandar, Kanithar, Madislak, Ralmevik, Shaumar, Vladislak
+    female_names: Fyevarra, Hulmarra, Immith, Imzel, Navarra, Shevarra, Tammith, Yuldra
+    family_names: Chergoba, Dyernina, Iltazyara, Murnyethara, Stayanoga, Ulmokina
+  - name: Shou
+    male_names: An, Chen, Chi, Fai, Jiang, Jun, Lian, Long, Meng, On, Shan, Shui, Wen
+    female_names: Bai, Chao, Jia, Lei, Mei, Qiao, Shui, Tai
+    family_names: Chien, Huang, Kao, Kung, Lao, Ling, Mei, Pin, Shin, Sum, Tan, Wan
+  - name: Tethyrian
+    male_names: Darvin, Dorn, Evendur, Gorstag, Grim, Helm, Malark, Morn, Randal, Stedd
+    female_names: Arveene, Esvele, Jhessail, Kerri, Lureene, Miri, Rowan, Shandri, Tessele
+    family_names: Amblecrown, Buckman, Dundragon, Evenwood, Greycastle, Tallstag
+  - name: Turami
+    male_names: Anton, Diero, Marcon, Pieron, Rimardo, Romero, Salazar, Umbero
+    female_names: Balama, Dona, Faila, Jalana, Luisa, Marta, Quara, Selise, Vonda
+    family_names: Agosto, Astorio, Calabra, Domine, Falone, Marivaldi, Pisacar, Ramondo
+

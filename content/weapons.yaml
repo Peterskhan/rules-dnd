@@ -1,0 +1,246 @@
+weapons:
+
+  ## Melee simple weapons
+  - id: club
+    name: Club
+    type: simple
+    cost: 1 sp
+    damage: 1d4 bludgeoning 
+    weight: 2
+  - id: dagger
+    name: Dagger
+    type: simple
+    cost: 2 gp
+    damage: 1d4 piercing
+    weight: 1
+    finesse: true
+  - id: greatclub
+    name: Greatclub
+    type: simple
+    cost: 2 sp
+    damage: 1d8 bludgeoning
+    weight: 10
+  - id: handaxe
+    name: Handaxe
+    type: simple
+    cost: 5 gp
+    damage: 1d6 slashing
+    weight: 2
+  - id: javelin
+    name: Javelin
+    type: simple
+    cost: 5 sp
+    damage: 1d6 piercing
+    weight: 2
+  - id: light_hammer
+    name: Light hammer
+    type: simple
+    cost: 2 gp
+    damage: 1d4 bludgeoning 
+    weight: 2
+  - id: mace
+    name: Mace
+    type: simple
+    cost: 5 gp
+    damage: 1d6 bludgeoning
+    weight: 4
+  - id: quarterstaff
+    name: Quarterstaff
+    type: simple
+    cost: 2 sp
+    damage: 1d6 bludgeoning
+    weight: 4
+  - id: sickle
+    name: Sickle
+    type: simple
+    cost: 1 gp
+    damage: 1d4 slashing  
+    weight: 2
+  - id: spear
+    name: Spear
+    type: simple
+    cost: 1 gp
+    damage: 1d6 piercing
+    weight: 3
+
+  ## Ranged simple weapons
+  - id: crossbow_light
+    name: Crossbow (light)
+    type: simple
+    cost: 25 gp
+    damage: 1d8 piercing
+    weight: 5
+    ranged: true
+  - id: dart
+    name: Dart
+    type: simple
+    cost: 5 cp
+    damage: 1d4 piercing
+    weight: 0.25
+    ranged: true
+    finesse: true
+  - id: shortbow
+    name: Shortbow
+    type: simple
+    cost: 25 gp
+    damage: 1d6 piercing
+    weight: 2
+    ranged: true
+  - id: sling
+    name: Sling
+    type: simple
+    cost: 1 sp
+    damage: 1d4 bludgeoning 
+    weight: 0
+    ranged: true
+
+  ## Melee martial weapons
+  - id: battleaxe
+    name: Battleaxe
+    type: martial
+    cost: 10 gp
+    damage: 1d8 slashing
+    weight: 4
+  - id: flail
+    name: Flail
+    type: martial
+    cost: 10 gp
+    damage: 1d8 bludgeoning
+    weight: 2
+  - id: glaive
+    name: Glaive
+    type: martial
+    cost: 20 gp
+    damage: 1d10 slashing
+    weight: 6
+  - id: greataxe
+    name: Greataxe
+    type: martial
+    cost: 30 gp
+    damage: 1d12 slashing
+    weight: 7
+  - id: greatsword
+    name: Greatsword
+    type: martial
+    cost: 50 gp
+    damage: 2d6 slashing
+    weight: 6
+  - id: halberd
+    name: Halberd
+    type: martial
+    cost: 20 gp
+    damage: 1d10 slashing
+    weight: 6
+  - id: lance
+    name: Lance
+    type: martial
+    cost: 10 gp
+    damage: 1d12 piercing
+    weight: 6
+  - id: longsword
+    name: Longsword
+    type: martial
+    cost: 15 gp
+    damage: 1d8 slashing
+    weight: 3
+  - id: maul
+    name: Maul
+    type: martial
+    cost: 10 gp
+    damage: 2d6 bludgeoning
+    weight: 10
+  - id: morningstart
+    name: Morningstar
+    type: martial
+    cost: 15 gp
+    damage: 1d8 piercing
+    weight: 4
+  - id: pike
+    name: Pike
+    type: martial
+    cost: 5 gp
+    damage: 1d10 piercing
+    weight: 18
+  - id: rapier
+    name: Rapier
+    type: martial
+    cost: 25 gp
+    damage: 1d8 piercing
+    finesse: true
+    weight: 2
+  - id: scimitar
+    name: Scimitar
+    type: martial
+    cost: 25 gp
+    damage: 1d6 slashing
+    weight: 3
+    finesse: true
+  - id: shortsword
+    name: Shortsword
+    type: martial
+    cost: 10 gp
+    damage: 1d6 piercing
+    weight: 2
+    finesse: true
+  - id: trident
+    name: Trident
+    type: martial
+    cost: 5 gp
+    damage: 1d6 piercing
+    weight: 4
+  - id: war_pick
+    name: War pick
+    type: martial
+    cost: 5 gp
+    damage: 1d8 piercing
+    weight: 2
+  - id: warhammer
+    name: Warhammer
+    type: martial
+    cost: 15 gp
+    damage: 1d8 bludgeoning
+    weight: 2
+  - id: whip
+    name: Whip
+    type: martial
+    cost: 2 gp
+    damage: 1d4 slashing
+    weight: 3
+    finesse: true
+
+  ## Ranged martial weapons
+  - id: blowgun
+    name: Blowgun
+    type: martial
+    cost: 10 gp
+    damage: 1 piercing
+    weight: 1
+    ranged: true
+  - id: crossbow_hand
+    name: Crossbow (hand)
+    type: martial
+    cost: 75 gp
+    damage: 1d6 piercing
+    weight: 3
+    ranged: true
+  - id: crossbow_heavy
+    name: Crossbow (heavy)
+    type: martial
+    cost: 50 gp
+    damage: 1d10 piercing
+    weight: 18
+    ranged: true
+  - id: longbow
+    name: Longbow
+    type: martial
+    cost: 50 gp
+    damage: 1d8 piercing
+    weight: 2
+    ranged: true
+  - id: net
+    name: Net
+    type: martial
+    cost: 1 gp
+    damage: 0 force
+    weight: 3
+    ranged: true
