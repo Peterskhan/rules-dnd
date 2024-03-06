@@ -152,6 +152,33 @@ class Character:
     """The ability scores of the character."""
     ability_scores: dict[Ability, int]
 
+    def _calculate_ability_modifier(self, ability: Ability) -> int:
+        return math.floor((self.ability_scores[ability] - 10) / 2)
+    
+    @property
+    def strength_modifier(self) -> int:
+        return self._calculate_ability_modifier(Ability.STRENGTH)
+    
+    @property
+    def dexterity_modifier(self) -> int:
+        return self._calculate_ability_modifier(Ability.DEXTERITY)
+    
+    @property
+    def constitution_modifier(self) -> int:
+        return self._calculate_ability_modifier(Ability.CONSTITUTION)
+    
+    @property
+    def intelligence_modifier(self) -> int:
+        return self._calculate_ability_modifier(Ability.INTELLIGENCE)
+    
+    @property
+    def wisdom_modifier(self) -> int:
+        return self._calculate_ability_modifier(Ability.WISDOM)
+    
+    @property
+    def charisma_modifier(self) -> int:
+        return self._calculate_ability_modifier(Ability.CHARISMA)
+    
     @property
     def ability_modifiers(self):
         """The ability modifiers of the character."""

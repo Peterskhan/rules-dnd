@@ -1,8 +1,8 @@
-import yaml
 from character import *
-from weapon import *
-from armor import *
 from gamecontroller import GameController
+from rules.armorclass import *
+from rules.damage import *
+from rules.checks import *
 
 def attack_with_character(source: Character, target: Character):
     print(f'{source.name} attacks {target.name} with a {source.equipped_weapon.name}.')
@@ -47,5 +47,27 @@ def simulate_fight():
     print(f'{winner.name} won the fight with {winner.hitpoints} remaining HP.')
     return winner, loser
 
+logging.basicConfig()
 GameController.load_weapons_and_armors()
-winner, loser = simulate_fight()
+character = Character()
+character.equipped_armor_id = 'half_plate'
+character.equipped_shield_id = 'shield'
+character.ability_scores[Ability.DEXTERITY] = 16
+character.resistances.append(DamageType.COLD)
+
+context = RuleEngine.Context()
+context.action = 'get_armor_class'
+context.character = character
+context = RuleEngine.execute_rules(context)
+print(f'Armor class: {context.result}')
+
+context = RuleEngine.Context()
+context.action = 'get_suffered_damage'
+context.character = character
+context.value = 60
+context.damage_type = DamageType.COLD
+context = RuleEngine.execute_rules(context)
+print(f'Suffered damage: {context.result}')
+
+# OLD CODE: 
+# winner, loser = simulate_fight()

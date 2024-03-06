@@ -1,184 +1,176 @@
-from abc import abstractclassmethod
-from character import *
-
-## Rule engine framework
-## =====================
+from abc import abstractmethod
+from typing import ClassVar, Any
+import logging
+import inspect
 
 class Rule:
+    """Base class for rules."""
 
-    @abstractclassmethod
-    def when(self, context) -> bool:
-        pass
+    @abstractmethod
+    def when(context: 'RuleEngine.Context', **kwargs) -> bool:
+        """
+        Matches the parameters of the rule from the context and checks whether
+        the rule is eligible for firing.
 
-    @abstractclassmethod
-    def then(self, context) -> None:
-        pass
+        The first argument is fixed: the context for the rule execution.
+        The additional (optional) arguments can be used to match variables
+        from the rule context based on name and type. The name and type of 
+        the arguments has to match a variable in the context in order for
+        the rule to be eligible.
+
+        Example: def when(context: RuleEngine.Context, a: int, b: Any, c: None)
+          - There has to be an int variable called "a" in the context
+          - There has to be a variable of any type in the context called "b"
+          - There must not be a variable called "c" in the context.
+
+        If the parameter list is successfully matched to the context, this 
+        method is called by the rule engine. The return value indicates whether 
+        the rule is eligible for firing.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def then(context: 'RuleEngine.Context', **kwargs) -> None:
+         """
+         Performs the action of the rule, for example: modifies the context, 
+         or causes a side-effect.
+
+         This method is called by the rule engine during rule execution if
+         the rule is eligible for firing. The parameter list is depending
+         on the parameter list of the when(...) method. The context is always
+         passed, the necessary additional arguments can be captured with the
+         same name that was used in when(...) during parameter matching. Not
+         all matched arguments has to be specified (use **kwargs to swallow
+         the unused matched parameters). 
+         """
+         raise NotImplementedError()
 
 class RuleEngine:
+    """Rule engine for evaluating rules."""
     
-    rules = []
-    required_tokens = {}
+    """List of registered rule classes."""
+    rules: ClassVar[list[Rule]] = []
 
+    logger: ClassVar[logging.Logger] = logging.getLogger('RuleEngine')
+    
     class Context:
-        pass
+        """Context class for passing information to and between rules."""
+
+        def __init__(self):
+            """Initializes the rule Context."""
+            self._changed_attributes = []
+            self._flags = set()
+
+        def __setattr__(self, key: str, value: Any):
+            """Intercepts setting context attributes for detecting changes."""
+            if not key.startswith('_') and key not in self._changed_attributes \
+               and (not hasattr(self, key) or getattr(self, key) != value):
+                self._changed_attributes.append(key)
+            super().__setattr__(key, value)
+
+        def changed_attributes(self) -> list[str]:
+            """Queries changed attributes since the last invocation."""
+            changed_attributes = self._changed_attributes
+            self._changed_attributes = []
+            return changed_attributes
+
+        def has_changed(self):
+            """Queries whether there are any changed attributes without clearing them."""
+            return len(self._changed_attributes) != 0
+        
+        def has_flag(self, flag: str) -> bool:
+            """Queries whether the specified flag is set."""
+            return flag in self._flags 
+
+        def set_flag(self, flag: str) -> None:
+            """Sets the specified flag."""
+            self._flags.add(flag)
+
+        def reset_flag(self, flag: str) -> None:
+            """Resets the specified flag."""
+            self._flags.discard(flag)
 
     @classmethod
-    def has_required_tokens(cls, rule_class, context: dict) -> bool:
-        for token, token_type in cls.required_tokens[rule_class].items():
-            found = hasattr(context, token) and type(getattr(context, token)) == token_type
-            if not found:
-                return False
-        return True
+    def register_rule(cls, rule_class) -> None:
+        """Registers a rule within the rule engine."""
+        cls.rules.append(rule_class)
 
     @classmethod
-    def evaluate_rules_once(cls, context) -> tuple[bool, Context]:
-        found_eligible_rule = False
-        for rule in cls.rules:
-            if cls.has_required_tokens(rule, context) and rule.when(context):
-                found_eligible_rule = True
-                rule.then(context)
+    def execute_rules(cls, context: Context) -> Context:
+        """Executes the rules."""
 
-        return found_eligible_rule, context
+        changed_attributes = context.changed_attributes()
+        cls.logger.setLevel(logging.DEBUG)
 
-    @classmethod
-    def execute_rules(cls, context) -> Context:
-        found_eligible_rule, context = cls.evaluate_rules_once(context)
-        while found_eligible_rule:
-            found_eligible_rule, context = cls.evaluate_rules_once(context)
+        def gather_rule_args(rule_class):
+            """Gathers the arguments required by the specified rule from the context."""
+            return {arg_name: getattr(context, arg_name) if arg_type is not None else None
+                    for arg_name, arg_type in rule_class.required_args.items()}
+
+        def can_rule_fire(rule_class):
+            """Determines whether the specified rule is eligible for execution."""
+            return rule_class.has_required_arguments(context) \
+                   and rule_class.has_argument_changed(changed_attributes) \
+                   and rule_class.when(context, **gather_rule_args(rule_class))
+
+        while changed_attributes:
+            cls.logger.debug(f'Iteration started, changed_attributes={changed_attributes}')
+            agenda = [rule for rule in cls.rules if can_rule_fire(rule)]
+            agenda.sort(key=lambda rule: rule.priority, reverse=True)
+            cls.logger.debug(f'Agenda sorted, agenda={[rule.__name__ for rule in agenda]}')
+            for rule in agenda:
+                rule.then(context, **gather_rule_args(rule))
+
+            changed_attributes = context.changed_attributes()
+
         return context
 
-def rule(*args, **kwargs):
-    requires = kwargs.get('requires', {})
-
-    def decorator(rule_class):
-        RuleEngine.required_tokens[rule_class] = requires
-        RuleEngine.rules.append(rule_class)
-        return rule_class
-
+def accepts_keywords(*allowed_keywords):
+    """Searches the keyword arguments of another decorator for not allowed keywords."""
+    def decorator(decorator_func):
+        def wrapper(*args, **kwargs):
+            for kwarg in kwargs:
+                if kwarg not in allowed_keywords:
+                    raise ValueError(f'Keyword "{kwarg}" is not allowed in @{decorator_func.__name__}')
+            return decorator_func(*args, **kwargs)
+        return wrapper
     return decorator
 
-## Rolling checks
-## ==============
+@accepts_keywords('priority')
+def rule(arg=None, **kwargs):
+    """Decorator for marking rule classes."""
 
-@rule(requires={'action': str, 'ability': Ability})
-class RollAbilityCheck(Rule):
-    """When rolling an ability check we roll a 1d20 and add a modifier."""
-
-    def when(context: RuleEngine.Context) -> bool:
-        return context.action == 'roll_ability_check' \
-               and not hasattr(context, 'rolled_ability_check')
-
-    def then(context: RuleEngine.Context) -> None:
-        context.result = context.character.roll_ability_check(context.ability)
-        context.rolled_ability_check = True
-
-@rule
-class RollSkillCheck(Rule):
-    pass
-
-@rule(requires={'action': str, 'skill': Skill, 'character': Character})
-class StealthCheckDisadvantageFromArmor(Rule):
-    """When the character wears unstealthy armor, it has disadvantage on stealth checks."""
-
-    def when(context):
-        return context.action == 'roll_skill_check' \
-               and context.skill == Skill.STEALTH \
-               and context.character.equipped_armor is not None \
-               and context.character.equipped_armor.has_stealth_disadvantage
-
-    def then(context):
-        context.has_disadvantage = True
+    def decorator(rule_class):
+        required_args = {}
+        signature = inspect.signature(rule_class.when)
+        for name, arg in signature.parameters.items():
+            if name != 'context' and arg.annotation != RuleEngine.Context:
+                required_args[name] = arg.annotation if arg.annotation is not inspect.Parameter.empty else Any
         
-@rule(requires={'action': str})
-class RollInitiative(Rule):
-    """When rolling initiative we roll a dexterity check."""
+        def has_required_arguments(context: RuleEngine.Context) -> bool:
+            for arg_name, arg_type in required_args.items():
+                has_not_allowed_arg = arg_type is None and hasattr(context, arg_name)
+                has_missing_arg = arg_type is not None and not hasattr(context, arg_name)
+                has_wrong_arg_type = arg_type is not Any and hasattr(context, arg_name) \
+                                     and type(getattr(context, arg_name)) != arg_type \
 
-    def when(context: RuleEngine.Context) -> bool:
-        return context.action == 'roll_initiative'
+                if has_not_allowed_arg or has_missing_arg or has_wrong_arg_type:
+                    return False
+            return True
+            return all(hasattr(context, arg_name) if arg_type is not None else (not hasattr(context, arg_name))
+                       and (type(getattr(context, arg_name)) == arg_type or arg_type == Any)
+                       for arg_name, arg_type in required_args.items())
     
-    def then(context: RuleEngine.Context) -> None:
-        context.action = 'roll_ability_check'
-        context.ability = Ability.DEXTERITY
+        def has_argument_changed(changed_args: list[str]) -> bool:
+            return any([arg in changed_args for arg in required_args])
 
-## Calculating armor class
-## =======================
+        rule_class.has_argument_changed = has_argument_changed
+        rule_class.has_required_arguments = has_required_arguments
+        rule_class.required_args = required_args
+        rule_class.priority = kwargs.get('priority', 0)
+        RuleEngine.register_rule(rule_class)
+        return rule_class
 
-@rule(requires={'action': str, 'character': Character})
-class ArmorClassNoArmor(Rule):
-    def when(context: RuleEngine.Context):
-        return context.action == 'get_armor_class' \
-               and not hasattr(context, 'armor_ac_added') \
-               and context.character.equipped_armor is None
-    
-    def then(context: RuleEngine.Context):
-        print('Character has no armor on, using unarmored AC')
-        context.result = 10 + context.character.ability_modifiers[Ability.DEXTERITY]
-        context.armor_ac_added = True
-
-@rule(requires={'action': str, 'character': Character})
-class ArmorClassLightArmor(Rule):
-    def when(context):
-        return context.action == 'get_armor_class' \
-               and not hasattr(context, 'armor_ac_added') \
-               and context.character.equipped_armor is not None \
-               and context.character.equipped_armor.type == ArmorType.LIGHT
-    
-    def then(context):
-        print('Character has light armor on, using AC + DEX_MOD')
-        context.result = context.character.equipped_armor.armor_class \
-                         + context.character.ability_modifiers[Ability.DEXTERITY]
-        context.armor_ac_added = True
-
-@rule(requires={'action': str, 'character': Character})
-class ArmorClassMediumArmor(Rule):
-    def when(context):
-        return context.action == 'get_armor_class' \
-               and not hasattr(context, 'armor_ac_added') \
-               and context.character.equipped_armor is not None \
-               and context.character.equipped_armor.type == ArmorType.MEDIUM
-    
-    def then(context):
-        print('Character has medium armor on, using AC + MIN(2, DEX_MOD)')
-        context.result = context.character.equipped_armor.armor_class \
-                         + min(2, context.character.ability_modifiers[Ability.DEXTERITY])
-        context.armor_ac_added = True
-
-@rule(requires={'action': str, 'character': Character})
-class ArmorClassHeavyArmor(Rule):
-    def when(context):
-        return context.action == 'get_armor_class' \
-               and not hasattr(context, 'armor_ac_added') \
-               and context.character.equipped_armor is not None \
-               and context.character.equipped_armor.type == ArmorType.HEAVY
-    
-    def then(context):
-        print('Character has heavy armor on, using AC')
-        context.result = context.character.equipped_armor.armor_class
-        context.armor_ac_added = True
-
-@rule(requires={'action': str, 'character': Character, 'result': int})
-class ArmorClassShield(Rule):
-    def when(context):
-        return context.action == 'get_armor_class' \
-               and not hasattr(context, 'shield_ac_added') \
-               and context.character.equipped_shield is not None
-    
-    def then(context):
-        print('Character has shield, adding shield AC')
-        context.result += context.character.equipped_shield.armor_class
-        context.shield_ac_added = True
-
-
-
-GameController.load_weapons_and_armors()
-character = Character()
-character.equipped_armor_id = 'half_plate'
-character.equipped_shield_id = 'shield'
-character.ability_scores[Ability.DEXTERITY] = 16
-
-context = RuleEngine.Context()
-context.action = 'get_armor_class'
-context.character = character
-context = RuleEngine.execute_rules(context)
-
-print(f'Armor class: {context.result}')
+    # Returning the correct value depending on whether 
+    # the decorator is used as @rule or @rule(...) 
+    return decorator(arg) if inspect.isclass(arg) else decorator
