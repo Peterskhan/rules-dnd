@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import ClassVar, Any
+from typing import ClassVar, Any, List
 import logging
 import inspect
 
@@ -58,20 +58,42 @@ class RuleEngine:
 
         def __init__(self):
             """Initializes the rule Context."""
-            self._changed_attributes = []
+            self._attributes = {}
+            self._changed_attributes = set()
             self._flags = set()
 
-        def __setattr__(self, key: str, value: Any):
-            """Intercepts setting context attributes for detecting changes."""
-            if not key.startswith('_') and key not in self._changed_attributes \
-               and (not hasattr(self, key) or getattr(self, key) != value):
-                self._changed_attributes.append(key)
-            super().__setattr__(key, value)
+        def update(self, key_or_dict: str | dict, value: Any = None):
+            """Updates the value of the specified variable."""
+            
+            def is_value_changed_or_new(_key: str, _value: Any):
+                return _key not in self._attributes \
+                       or (_key in self._attributes 
+                           and self._attributes[_key] != _value)
 
-        def changed_attributes(self) -> list[str]:
+            if isinstance(key_or_dict, str):
+                if is_value_changed_or_new(key_or_dict, value):
+                    self._changed_attributes.add(key_or_dict)
+                    self._attributes[key_or_dict] = value
+
+            elif isinstance(key_or_dict, dict):
+                for key, dict_value in key_or_dict.items():
+                    if is_value_changed_or_new(key, dict_value):
+                        self._changed_attributes.add(key)
+                        self._attributes[key] = dict_value
+
+            else:
+                raise AssertionError(f'Wrong parameters: {type(key_or_dict)}.')
+            
+        def get(self, key):
+            return self._attributes.get(key, None)
+        
+        def has_attribute(self, key):
+            return key in self._attributes
+
+        def changed_attributes(self) -> set[str]:
             """Queries changed attributes since the last invocation."""
-            changed_attributes = self._changed_attributes
-            self._changed_attributes = []
+            changed_attributes = self._changed_attributes.copy()
+            self._changed_attributes.clear()
             return changed_attributes
 
         def has_changed(self):
@@ -90,6 +112,10 @@ class RuleEngine:
             """Resets the specified flag."""
             self._flags.discard(flag)
 
+        def clear(self):
+            """Deletes all flags at attributes."""
+            self.__init__()
+
     @classmethod
     def register_rule(cls, rule_class) -> None:
         """Registers a rule within the rule engine."""
@@ -104,7 +130,7 @@ class RuleEngine:
 
         def gather_rule_args(rule_class):
             """Gathers the arguments required by the specified rule from the context."""
-            return {arg_name: getattr(context, arg_name) if arg_type is not None else None
+            return {arg_name: context.get(arg_name) if arg_type is not None else None
                     for arg_name, arg_type in rule_class.required_args.items()}
 
         def can_rule_fire(rule_class):
@@ -149,17 +175,14 @@ def rule(arg=None, **kwargs):
         
         def has_required_arguments(context: RuleEngine.Context) -> bool:
             for arg_name, arg_type in required_args.items():
-                has_not_allowed_arg = arg_type is None and hasattr(context, arg_name)
-                has_missing_arg = arg_type is not None and not hasattr(context, arg_name)
-                has_wrong_arg_type = arg_type is not Any and hasattr(context, arg_name) \
-                                     and type(getattr(context, arg_name)) != arg_type \
+                has_not_allowed_arg = arg_type is None and context.has_attribute(arg_name)
+                has_missing_arg = arg_type is not None and not context.has_attribute(arg_name)
+                has_wrong_arg_type = arg_type is not Any and context.has_attribute(arg_name) \
+                                     and not isinstance(context.get(arg_name), arg_type)
 
                 if has_not_allowed_arg or has_missing_arg or has_wrong_arg_type:
                     return False
             return True
-            return all(hasattr(context, arg_name) if arg_type is not None else (not hasattr(context, arg_name))
-                       and (type(getattr(context, arg_name)) == arg_type or arg_type == Any)
-                       for arg_name, arg_type in required_args.items())
     
         def has_argument_changed(changed_args: list[str]) -> bool:
             return any([arg in changed_args for arg in required_args])

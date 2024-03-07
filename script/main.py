@@ -56,18 +56,15 @@ character.ability_scores[Ability.DEXTERITY] = 16
 character.resistances.append(DamageType.COLD)
 
 context = RuleEngine.Context()
-context.action = 'get_armor_class'
-context.character = character
+context.update({'actions': ['get_armor_class'], 'character': character})
 context = RuleEngine.execute_rules(context)
-print(f'Armor class: {context.result}')
+print(f'Armor class: {context.get("result")}')
 
 context = RuleEngine.Context()
-context.action = 'get_suffered_damage'
-context.character = character
-context.value = 60
-context.damage_type = DamageType.COLD
+context.update({'actions': ['get_suffered_damage'], 'character': character, 
+                'value': 60, 'damage_type': DamageType.COLD})
 context = RuleEngine.execute_rules(context)
-print(f'Suffered damage: {context.result}')
+print(f'Suffered damage: {context.get("result")}')
 
 # OLD CODE: 
 # winner, loser = simulate_fight()
