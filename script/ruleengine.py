@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import ClassVar, Any, List
+from typing import ClassVar, Any, List, Dict
 import logging
 import inspect
 
@@ -56,11 +56,18 @@ class RuleEngine:
     class Context:
         """Context class for passing information to and between rules."""
 
-        def __init__(self):
+        def __init__(self, attributes: dict = None):
             """Initializes the rule Context."""
             self._attributes = {}
             self._changed_attributes = set()
             self._flags = set()
+            self.actions = []
+
+            if isinstance(attributes, Dict):
+                self.update(attributes)
+        
+        ## Handling attributes
+        ## ===================
 
         def update(self, key_or_dict: str | dict, value: Any = None):
             """Updates the value of the specified variable."""
@@ -75,7 +82,7 @@ class RuleEngine:
                     self._changed_attributes.add(key_or_dict)
                     self._attributes[key_or_dict] = value
 
-            elif isinstance(key_or_dict, dict):
+            elif isinstance(key_or_dict, Dict):
                 for key, dict_value in key_or_dict.items():
                     if is_value_changed_or_new(key, dict_value):
                         self._changed_attributes.add(key)
@@ -84,8 +91,8 @@ class RuleEngine:
             else:
                 raise AssertionError(f'Wrong parameters: {type(key_or_dict)}.')
             
-        def get(self, key):
-            return self._attributes.get(key, None)
+        def get(self, key, default = None):
+            return self._attributes.get(key, default)
         
         def has_attribute(self, key):
             return key in self._attributes
@@ -100,6 +107,9 @@ class RuleEngine:
             """Queries whether there are any changed attributes without clearing them."""
             return len(self._changed_attributes) != 0
         
+        ## Handling flags
+        ## ==============
+
         def has_flag(self, flag: str) -> bool:
             """Queries whether the specified flag is set."""
             return flag in self._flags 
@@ -122,8 +132,11 @@ class RuleEngine:
         cls.rules.append(rule_class)
 
     @classmethod
-    def execute_rules(cls, context: Context) -> Context:
+    def execute_rules(cls, context: Context | Dict) -> Context:
         """Executes the rules."""
+
+        if isinstance(context, Dict):
+            context = RuleEngine.Context(context)
 
         changed_attributes = context.changed_attributes()
         cls.logger.setLevel(logging.DEBUG)
@@ -139,8 +152,9 @@ class RuleEngine:
                    and rule_class.has_argument_changed(changed_attributes) \
                    and rule_class.when(context, **gather_rule_args(rule_class))
 
-        while changed_attributes:
-            cls.logger.debug(f'Iteration started, changed_attributes={changed_attributes}')
+        cls.logger.debug('====== Rule engine started ======')
+        while changed_attributes or context.actions:
+            cls.logger.debug(f'Iteration, changed_attributes={changed_attributes}')
             agenda = [rule for rule in cls.rules if can_rule_fire(rule)]
             agenda.sort(key=lambda rule: rule.priority, reverse=True)
             cls.logger.debug(f'Agenda sorted, agenda={[rule.__name__ for rule in agenda]}')

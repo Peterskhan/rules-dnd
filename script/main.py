@@ -1,3 +1,4 @@
+import sys
 from character import *
 from gamecontroller import GameController
 from rules.armorclass import *
@@ -47,24 +48,27 @@ def simulate_fight():
     print(f'{winner.name} won the fight with {winner.hitpoints} remaining HP.')
     return winner, loser
 
-logging.basicConfig()
+logging.basicConfig(format='%(name)-10s [%(levelname)s]: %(message)s')
 GameController.load_weapons_and_armors()
 character = Character()
-character.equipped_armor_id = 'half_plate'
-character.equipped_shield_id = 'shield'
 character.ability_scores[Ability.DEXTERITY] = 16
+character.add_experience(4000)
 character.resistances.append(DamageType.COLD)
 
-context = RuleEngine.Context()
-context.update({'actions': ['get_armor_class'], 'character': character})
-context = RuleEngine.execute_rules(context)
-print(f'Armor class: {context.get("result")}')
+print(f'Armor class: {character.armor_class}')
+character.equip_armor('half_plate')
+print(f'Armor class: {character.armor_class}')
+character.equip_shield('shield')
+print(f'Armor class: {character.armor_class}')
+character.unequip_shield()
+print(f'Armor class: {character.armor_class}')
+character.unequip_armor()
+print(f'Armor class: {character.armor_class}')
+
+sys.exit()
 
 context = RuleEngine.Context()
 context.update({'actions': ['get_suffered_damage'], 'character': character, 
                 'value': 60, 'damage_type': DamageType.COLD})
 context = RuleEngine.execute_rules(context)
 print(f'Suffered damage: {context.get("result")}')
-
-# OLD CODE: 
-# winner, loser = simulate_fight()

@@ -42,3 +42,76 @@ class RollInitiative(Rule):
         actions.append('roll_ability_check')
         context.update('actions', actions)
         context.update('ability', Ability.DEXTERITY)
+
+## Character rule action tests
+## ===========================
+
+@rule
+class PrintExperienceGained(Rule):
+    def when(context: RuleEngine.Context, 
+             actions: List, 
+             character: Character, 
+             gained_experience: int) -> bool:
+        return 'on:experience_gained' in actions
+    
+    def then(context: RuleEngine.Context, 
+             character: Character,
+             gained_experience: int, 
+             **kwargs):
+        print(f'{character.name} gained {gained_experience} XP.')
+
+@rule
+class PrintLevelGained(Rule):
+    def when(context: RuleEngine.Context, 
+             actions: List, 
+             character: Character, 
+             previous_level: int,
+             reached_level: int) -> bool:
+        return 'on:level_gained' in actions
+    
+    def then(context: RuleEngine.Context, 
+             character: Character,
+             previous_level: int,
+             reached_level: int, 
+             **kwargs):
+        print(f'{character.name} levelled-up from {previous_level} to {reached_level}.')
+
+@rule
+class PrintEquippedArmor(Rule):
+    def when(context: RuleEngine.Context,
+             actions: List,
+             character: Character) -> bool:
+        return 'on:equipped_armor' in actions
+    
+    def then(context, character: Character, **kwargs):
+        print(f'{character.name} equipped {character.equipped_armor.name}.')
+
+@rule
+class PrintUnequippedArmor(Rule):
+    def when(context: RuleEngine.Context,
+             actions: List,
+             character: Character) -> bool:
+        return 'on:unequipped_armor' in actions
+    
+    def then(context, character: Character, **kwargs):
+        print(f'{character.name} unquipped his/her armor.')
+
+@rule
+class PrintEquippedShield(Rule):
+    def when(context: RuleEngine.Context,
+             actions: List,
+             character: Character) -> bool:
+        return 'on:equipped_shield' in actions
+    
+    def then(context, character: Character, **kwargs):
+        print(f'{character.name} equipped {character.equipped_shield.name}.')
+
+@rule
+class PrintUnequippedShield(Rule):
+    def when(context: RuleEngine.Context,
+             actions: List,
+             character: Character) -> bool:
+        return 'on:unequipped_shield' in actions
+    
+    def then(context, character: Character, **kwargs):
+        print(f'{character.name} unquipped his/her shield.')

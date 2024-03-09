@@ -5,6 +5,7 @@ from armor import Armor, ArmorType
 from weapon import Weapon, WeaponType, DamageType
 import math
 from gamecontroller import GameController
+from ruleengine import RuleEngine
 
 class Condition(Enum):
     BLINDED = 0,
@@ -58,7 +59,7 @@ class Character:
         self.class_id = None
         self.race_id = None
         self.subrace_id = None
-        self.experience = 4000
+        self.experience = 0
         self.ability_scores = {Ability.CHARISMA: 10, 
                                Ability.CONSTITUTION: 10,
                                Ability.DEXTERITY: 10,
@@ -81,6 +82,7 @@ class Character:
         self.resistances = []
         self.immunities = []
         self.base_speed = 30
+        self.armor_class = 0
         self.equipped_armor_id = ''
         self.equipped_shield_id = ''
         self.active_conditions = set()
@@ -134,17 +136,49 @@ class Character:
         20: (355000, 6)
     }
 
+    def add_experience(self, amount: int):
+        """
+        Adds the specified amount of experience to the character.
+        
+        This method triggers the 'on:experience_gained' rule action,
+        with the following attributes:
+            - 'character': The character instance that gained the experience.
+            - 'gained_experience': The amount of experience gained.
+
+        This method optionally triggers the 'on:level_gained' rule action,
+        if the character levelled-up because of the gained experience. The
+        following attributes are passed to the rules:
+            - 'character': The character instance that gained a level.
+            - 'previous_level': The previous level before levelling-up.
+            - 'reached_level': The final level reached after levelling-up.
+        """
+
+        previous_level = self.level
+        self.experience += amount
+
+        context = RuleEngine.Context()
+        context.update({'actions': ['on:experience_gained'],
+                        'character': self, 
+                        'gained_experience': amount})
+
+        if previous_level != self.level:
+            context.get('actions').append('on:level_gained')
+            context.update({'previous_level': previous_level,
+                            'reached_level': self.level})
+
+        RuleEngine.execute_rules(context)
+
     @property
     def level(self) -> int:
         """The current level of the character."""
         return next(level for level, (xp_threshold, _) in reversed(self._LEVEL_TO_XP_AND_PROFICIENCY.items())
-                    if self.experience > xp_threshold)
+                    if self.experience >= xp_threshold)
     
     @property
     def proficiency_bonus(self) -> int:
         """The current proficiency bonus of the character."""
         return next(proficiency for (xp_threshold, proficiency) in reversed(self._LEVEL_TO_XP_AND_PROFICIENCY.values())
-                    if self.experience > xp_threshold)
+                    if self.experience >= xp_threshold)
 
     ## Ability scores
     ## ==============
@@ -152,40 +186,33 @@ class Character:
     """The ability scores of the character."""
     ability_scores: dict[Ability, int]
 
-    def _calculate_ability_modifier(self, ability: Ability) -> int:
+    def get_ability_modifier(self, ability: Ability) -> int:
+        """Returns the specified ability modifier of the character."""
         return math.floor((self.ability_scores[ability] - 10) / 2)
     
     @property
     def strength_modifier(self) -> int:
-        return self._calculate_ability_modifier(Ability.STRENGTH)
+        return self.get_ability_modifier(Ability.STRENGTH)
     
     @property
     def dexterity_modifier(self) -> int:
-        return self._calculate_ability_modifier(Ability.DEXTERITY)
+        return self.get_ability_modifier(Ability.DEXTERITY)
     
     @property
     def constitution_modifier(self) -> int:
-        return self._calculate_ability_modifier(Ability.CONSTITUTION)
+        return self.get_ability_modifier(Ability.CONSTITUTION)
     
     @property
     def intelligence_modifier(self) -> int:
-        return self._calculate_ability_modifier(Ability.INTELLIGENCE)
+        return self.get_ability_modifier(Ability.INTELLIGENCE)
     
     @property
     def wisdom_modifier(self) -> int:
-        return self._calculate_ability_modifier(Ability.WISDOM)
+        return self.get_ability_modifier(Ability.WISDOM)
     
     @property
     def charisma_modifier(self) -> int:
-        return self._calculate_ability_modifier(Ability.CHARISMA)
-    
-    @property
-    def ability_modifiers(self):
-        """The ability modifiers of the character."""
-        modifiers = {}
-        for ability, score in self.ability_scores.items():
-            modifiers[ability] = math.floor((score - 10) / 2.0)
-        return modifiers
+        return self.get_ability_modifier(Ability.CHARISMA)
 
     ## Proficiencies
     ## =============
@@ -235,25 +262,11 @@ class Character:
     """List of damage types the character is immune to."""
     immunities: list[DamageType]
 
-    ## Armor and speed
-    ## ===============
+    ## Speed
+    ## =====
 
     """The base movement speed of the character."""
     base_speed: int
-
-    """The ID of the currently equipped armor of the character."""
-    equipped_armor_id: str
-
-    @property
-    def equipped_armor(self) -> Armor | None:
-        return GameController.armors.get(self.equipped_armor_id)
-
-    """The ID of the currently equipped shield of the character."""
-    equipped_shield_id = str
-
-    @property
-    def equipped_shield(self) -> Armor | None:
-        return GameController.armors.get(self.equipped_shield_id)
 
     @property
     def speed(self) -> int:
@@ -265,36 +278,78 @@ class Character:
         
         return self.base_speed
 
+    ## Armor, shield and armor class
+    ## =============================
+
+    """The ID of the currently equipped armor of the character."""
+    equipped_armor_id: str
+
     @property
-    def armor_class(self) -> int:
-        """The current armor class of the character."""
+    def equipped_armor(self) -> Armor | None:
+        """Returns the currently equipped armor or None if unarmored."""
+        return GameController.armors.get(self.equipped_armor_id)
+    
+    def equip_armor(self, armor_id: str):
+        """
+        Equips the armor with the specified ID, if it exists.
 
-        # While not wearing armor the base armor class is 10 + DEX modifier (PH. 14)
-        if self.equipped_armor is None:
-            return 10 + self.ability_modifiers[Ability.DEXTERITY]
+        This method triggers the 'on:armor_equipped' rule action,
+        with the following parameters:
+            - 'character': The character equipping the armor.
+        """
+        if armor_id in GameController.armors:
+            self.equipped_armor_id = armor_id
+            RuleEngine.execute_rules({'actions': ['on:equipped_armor'],
+                                      'character': self})
+
+    def unequip_armor(self):
+        """
+        Unequips the armor if one is currently equipped.
+
+        This method triggers the 'on:armor_unequipped' rule action,
+        with the following parameters:
+            - 'character': The character unequipping the armor.
+        """
+        if self.equipped_armor_id:
+            self.equipped_armor_id = ''
+            RuleEngine.execute_rules({'actions': ['on:unequipped_armor'],
+                                      'character': self})
         
-        total = 0
-        if self.equipped_shield is not None:
-            total += self.equipped_shield.armor_class
+    """The ID of the currently equipped shield of the character."""
+    equipped_shield_id = str
 
-        if self.equipped_armor is not None:
-            match self.equipped_armor.type:
-                case ArmorType.HEAVY:
-                    total += self.equipped_armor.armor_class
-                case ArmorType.MEDIUM:
-                    # Medium armor allows adding the DEX modifier 
-                    # capped at +2 to the armor class (PH. 144)
-                    total += self.equipped_armor.armor_class \
-                             + min(2, self.ability_modifiers[Ability.DEXTERITY])
-                case ArmorType.LIGHT:
-                    # Light armor allows adding the DEX modifier
-                    # to the armor class (PH. 144)
-                    total +=self.equipped_armor.armor_class \
-                            + self.ability_modifiers[Ability.DEXTERITY]
-                case _:
-                    raise AssertionError(f'Invalid equipped armor type: {self.equipped_armor.type}')
-                
-        return total
+    @property
+    def equipped_shield(self) -> Armor | None:
+        """Returns the currently equipped shield or None if not using one."""
+        return GameController.armors.get(self.equipped_shield_id)
+
+    def equip_shield(self, shield_id: str):
+        """
+        Equips the shield with the specified ID, if it exists.
+
+        This method triggers the 'on:shield_equipped' rule action,
+        with the following parameters:
+            - 'character': The character equipping the shield.
+        """
+        if shield_id in GameController.armors:
+            self.equipped_shield_id = shield_id
+            RuleEngine.execute_rules({'actions': ['on:equipped_shield'],
+                                      'character': self})
+            
+    def unequip_shield(self):
+        """
+        Unequips the shield if one is currently equipped.
+
+        This method triggers the 'on:shield_unequipped' rule action,
+        with the following parameters:
+            - 'character': The character unequipping the shield.
+        """
+        if self.equipped_shield_id:
+            self.equipped_shield_id = ''
+            RuleEngine.execute_rules({'actions': ['on:unequipped_shield'],
+                                      'character': self})
+            
+    armor_class: int
         
     ## Weapons
     ## =======
